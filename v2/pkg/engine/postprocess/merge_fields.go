@@ -2,9 +2,13 @@ package postprocess
 
 import (
 	"bytes"
+	"log"
+	"os"
 
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/resolve"
 )
+
+var debugMergeFields = os.Getenv("DEBUG_MERGE_FIELDS") == "1"
 
 type mergeFields struct {
 	disable bool
@@ -119,9 +123,35 @@ func (m *mergeFields) traverseNode(node resolve.Node) {
 		for i := 0; i < len(n.Fields); i++ {
 			m.traverseNode(n.Fields[i].Value)
 		}
+		if debugMergeFields {
+			debugDumpMergeFields(n)
+		}
 	case *resolve.Array:
 		m.traverseNode(n.Item)
 	}
+}
+
+func debugDumpMergeFields(obj *resolve.Object) {
+	for _, f := range obj.Fields {
+		name := string(f.Name)
+		log.Printf("[merge_fields] field=%s onType=%q parentOnType=%+v path=%v",
+			name,
+			bytesSliceToStrings(f.OnTypeNames),
+			f.ParentOnTypeNames,
+			f.Value.NodePath(),
+		)
+	}
+}
+
+func bytesSliceToStrings(in [][]byte) []string {
+	if in == nil {
+		return nil
+	}
+	out := make([]string, len(in))
+	for i, b := range in {
+		out[i] = string(b)
+	}
+	return out
 }
 
 func (m *mergeFields) canMergeScalars(left, right *resolve.Field) bool {
@@ -145,28 +175,34 @@ func (m *mergeFields) mergeScalars(left, right *resolve.Field) {
 		return
 	}
 	left.OnTypeNames = m.deduplicateOnTypeNames(append(left.OnTypeNames, right.OnTypeNames...))
-	if left.ParentOnTypeNames == nil {
+
+	// ParentOnTypeNames を Depth ごとに Names の union でマージする
+	if len(left.ParentOnTypeNames) == 0 {
 		left.ParentOnTypeNames = right.ParentOnTypeNames
 		return
 	}
-	if right.ParentOnTypeNames == nil {
+	if len(right.ParentOnTypeNames) == 0 {
 		return
 	}
-WithNext:
-	for i := range right.ParentOnTypeNames {
-		for j := range left.ParentOnTypeNames {
-			if right.ParentOnTypeNames[i].Depth == left.ParentOnTypeNames[j].Depth {
-				// merge all parent type conditions at the same depth
-				// this is important because resolvable.go ensures that at each depth layer,
-				// we have at least one matching type condition
-				// otherwise we skip resolving the field
-				left.ParentOnTypeNames[j].Names = m.deduplicateOnTypeNames(append(left.ParentOnTypeNames[j].Names, right.ParentOnTypeNames[i].Names...))
-				continue WithNext
-			}
-		}
-		// if we reach this point, we have a new depth layer and just append it
-		left.ParentOnTypeNames = append(left.ParentOnTypeNames, right.ParentOnTypeNames[i])
+
+	depthToNames := make(map[int][][]byte, len(left.ParentOnTypeNames)+len(right.ParentOnTypeNames))
+	for i := range left.ParentOnTypeNames {
+		depth := left.ParentOnTypeNames[i].Depth
+		depthToNames[depth] = append(depthToNames[depth], left.ParentOnTypeNames[i].Names...)
 	}
+	for i := range right.ParentOnTypeNames {
+		depth := right.ParentOnTypeNames[i].Depth
+		depthToNames[depth] = append(depthToNames[depth], right.ParentOnTypeNames[i].Names...)
+	}
+
+	merged := make([]resolve.ParentOnTypeNames, 0, len(depthToNames))
+	for depth, names := range depthToNames {
+		merged = append(merged, resolve.ParentOnTypeNames{
+			Depth: depth,
+			Names: m.deduplicateOnTypeNames(names),
+		})
+	}
+	left.ParentOnTypeNames = merged
 }
 
 func (m *mergeFields) fieldsCanMerge(left *resolve.Field, right *resolve.Field) bool {
@@ -222,6 +258,7 @@ func (m *mergeFields) sameParentOnTypeNames(left, right *resolve.Field) bool {
 	if len(left.ParentOnTypeNames) != len(right.ParentOnTypeNames) {
 		return false
 	}
+WithNext:
 	for i := range left.ParentOnTypeNames {
 		for j := range right.ParentOnTypeNames {
 			if left.ParentOnTypeNames[i].Depth != right.ParentOnTypeNames[j].Depth {
@@ -230,8 +267,10 @@ func (m *mergeFields) sameParentOnTypeNames(left, right *resolve.Field) bool {
 			if !m.sameOnTypeNames(left.ParentOnTypeNames[i].Names, right.ParentOnTypeNames[j].Names) {
 				continue
 			}
-			break
+			// この depth レイヤーでマッチしたので次のレイヤーへ
+			continue WithNext
 		}
+		// この depth レイヤーに対応する ParentOnTypeNames が right 側に存在しない
 		return false
 	}
 	return true
@@ -242,6 +281,29 @@ func (m *mergeFields) mergeValues(left, right *resolve.Field) {
 	case *resolve.Object:
 		r := right.Value.(*resolve.Object)
 		l.Fields = append(l.Fields, r.Fields...)
+
+		// オブジェクトフィールド同士の ParentOnTypeNames も Depth ごとに Names の union でマージする
+		if len(left.ParentOnTypeNames) == 0 {
+			left.ParentOnTypeNames = right.ParentOnTypeNames
+		} else if len(right.ParentOnTypeNames) != 0 {
+			depthToNames := make(map[int][][]byte, len(left.ParentOnTypeNames)+len(right.ParentOnTypeNames))
+			for i := range left.ParentOnTypeNames {
+				depth := left.ParentOnTypeNames[i].Depth
+				depthToNames[depth] = append(depthToNames[depth], left.ParentOnTypeNames[i].Names...)
+			}
+			for i := range right.ParentOnTypeNames {
+				depth := right.ParentOnTypeNames[i].Depth
+				depthToNames[depth] = append(depthToNames[depth], right.ParentOnTypeNames[i].Names...)
+			}
+			merged := make([]resolve.ParentOnTypeNames, 0, len(depthToNames))
+			for depth, names := range depthToNames {
+				merged = append(merged, resolve.ParentOnTypeNames{
+					Depth: depth,
+					Names: m.deduplicateOnTypeNames(names),
+				})
+			}
+			left.ParentOnTypeNames = merged
+		}
 	case *resolve.Array:
 		r := right.Value.(*resolve.Array)
 		if l.Item.NodeKind() == resolve.NodeKindObject {
