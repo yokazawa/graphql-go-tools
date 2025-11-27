@@ -20,7 +20,7 @@ type AbstractListItem interface {
 
 type Base interface {
 	IsBase()
-	GetCategory() *Category
+	GetBundle() *Bundle
 }
 
 type Cd interface {
@@ -106,6 +106,14 @@ func (B) IsAb() {}
 func (B) IsNamer()             {}
 func (this B) GetName() string { return this.Name }
 
+type Bundle struct {
+	ID             string    `json:"id"`
+	BundleName     string    `json:"bundleName"`
+	BundleOwner    *Owner    `json:"bundleOwner,omitempty"`
+	BundleOwners   []*Owner  `json:"bundleOwners"`
+	BundleRelation []*Bundle `json:"bundleRelation"`
+}
+
 type C struct {
 	Name *CDerObj `json:"name,omitempty"`
 }
@@ -123,11 +131,6 @@ type CDerObj struct {
 
 type Cat struct {
 	Name string `json:"name"`
-}
-
-type Category struct {
-	ID    string `json:"id"`
-	Owner *Owner `json:"owner,omitempty"`
 }
 
 type ConcreteListItem1 struct {
@@ -154,7 +157,7 @@ func (D) IsCDer()                {}
 func (this D) GetName() *CDerObj { return this.Name }
 
 type Owner struct {
-	Name string `json:"name"`
+	OwnerName string `json:"ownerName"`
 }
 
 type Product struct {
@@ -164,20 +167,20 @@ type Product struct {
 func (Product) IsEntity() {}
 
 type ProductA struct {
-	ID       string    `json:"id"`
-	Category *Category `json:"category,omitempty"`
+	ID     string  `json:"id"`
+	Bundle *Bundle `json:"bundle,omitempty"`
 }
 
-func (ProductA) IsBase()                     {}
-func (this ProductA) GetCategory() *Category { return this.Category }
+func (ProductA) IsBase()                 {}
+func (this ProductA) GetBundle() *Bundle { return this.Bundle }
 
 type ProductB struct {
-	ID       string    `json:"id"`
-	Category *Category `json:"category,omitempty"`
+	ID     string  `json:"id"`
+	Bundle *Bundle `json:"bundle,omitempty"`
 }
 
-func (ProductB) IsBase()                     {}
-func (this ProductB) GetCategory() *Category { return this.Category }
+func (ProductB) IsBase()                 {}
+func (this ProductB) GetBundle() *Bundle { return this.Bundle }
 
 type Purchase struct {
 	Product  *Product `json:"product"`

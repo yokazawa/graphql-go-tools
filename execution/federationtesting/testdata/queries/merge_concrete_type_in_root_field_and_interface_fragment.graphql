@@ -1,7 +1,8 @@
 query MergeConcreteTypeInRootFieldAndInterfaceFragment {
     productA {
-        category {
+        bundle {
             id
+            bundleName
         }
         ... on Base {
             ...ProductDetail
@@ -11,17 +12,21 @@ query MergeConcreteTypeInRootFieldAndInterfaceFragment {
 
 fragment ProductDetail on Base {
     ... on ProductB {
-        category {
-            displayOwner: owner {
-                name
+        bundle {
+            displayOwner: bundleOwner {
+                ownerName
             }
+            bundleOwners { ownerName }
+            bundleRelation { id bundleName }
         }
     }
     ... on ProductA {
-        category {
-            displayOwner: owner {
-                name
+        bundle {
+            displayOwner: bundleOwner {
+                ownerName
             }
+            bundleOwners { ownerName }
+            bundleRelation { id bundleName }
         }
     }
 }

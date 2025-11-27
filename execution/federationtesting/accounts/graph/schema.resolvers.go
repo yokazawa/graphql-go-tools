@@ -215,10 +215,25 @@ func (r *queryResolver) SomeNestedInterfaces(ctx context.Context) ([]model.SomeN
 func (r *queryResolver) ProductA(ctx context.Context) (*model.ProductA, error) {
 	return &model.ProductA{
 		ID: "p111",
-		Category: &model.Category{
-			ID: "c111",
-			Owner: &model.Owner{
-				Name: "owner",
+		Bundle: &model.Bundle{
+			ID:         "c111",
+			BundleName: "bundle",
+			BundleOwner: &model.Owner{
+				OwnerName: "owner",
+			},
+			BundleOwners: []*model.Owner{
+				{
+					OwnerName: "owner",
+				},
+			},
+			BundleRelation: []*model.Bundle{
+				{
+					ID:             "c112",
+					BundleName:     "bundle2",
+					BundleOwner:    nil,
+					BundleOwners:   []*model.Owner{},
+					BundleRelation: []*model.Bundle{},
+				},
 			},
 		},
 	}, nil

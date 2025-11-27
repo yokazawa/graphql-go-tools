@@ -578,7 +578,7 @@ func TestFederationIntegrationTest(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 		resp := gqlClient.Query(ctx, setup.GatewayServer.URL, testQueryPath("queries/merge_concrete_type_in_root_field_and_interface_fragment.graphql"), nil, t)
-		expected := `{"data":{"productA":{"category":{"id":"c111","displayOwner":{"name":"owner"}}}}}`
+		expected := `{"data":{"productA":{"bundle":{"id":"c111","bundleName":"bundle","displayOwner":{"ownerName":"owner"},"bundleOwners":[{"ownerName":"owner"}],"bundleRelation":[{"id":"c112","bundleName":"bundle2"}]}}}}`
 		assert.Equal(t, compact(expected), string(resp))
 	})
 }

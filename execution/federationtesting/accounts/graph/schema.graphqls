@@ -185,21 +185,24 @@ type CDerObj {
 }
 
 interface Base {
-    category: Category
+    bundle: Bundle
 }
-type Category {
+type Bundle {
     id: ID!
-    owner: Owner
+    bundleName: String!
+    bundleOwner: Owner
+    bundleOwners: [Owner!]!
+    bundleRelation: [Bundle!]!
 }
 type Owner {
-    name: String!
+    ownerName: String!
 }
 
 type ProductA implements Base {
     id: ID!
-    category: Category
+    bundle: Bundle
 }
 type ProductB implements Base {
     id: ID!
-    category: Category
+    bundle: Bundle
 }
