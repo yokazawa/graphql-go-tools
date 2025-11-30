@@ -237,7 +237,14 @@ func (m *mergeFields) mergeScalars(left, right *resolve.Field) {
 // because we will union the conditions to keep a single field and avoid dropping
 // the key due to ordering/condition checks at execution time.
 func (m *mergeFields) canMergeArrays(left, right *resolve.Field) bool {
-	// Names and kinds are checked by the caller. We accept merging for arrays.
+	// Names and kinds are checked by the caller.
+	// If both sides have explicit OnTypeNames, they must be identical; otherwise
+	// we would mix selections that belong to different runtime types.
+	if left.OnTypeNames != nil && right.OnTypeNames != nil {
+		if !m.sameOnTypeNames(left.OnTypeNames, right.OnTypeNames) {
+			return false
+		}
+	}
 	return true
 }
 
