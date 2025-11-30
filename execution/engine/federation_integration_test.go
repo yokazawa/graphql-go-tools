@@ -581,6 +581,17 @@ func TestFederationIntegrationTest(t *testing.T) {
 		expected := `{"data":{"productA":{"bundle":{"id":"c111","bundleName":"bundle","displayOwner":{"ownerName":"owner"},"bundleOwners":[{"ownerName":"owner"}],"bundleRelation":[{"id":"c112","bundleName":"bundle2"}]}}}}`
 		assert.Equal(t, compact(expected), string(resp))
 	})
+
+	t.Run("merge inline fragment", func(t *testing.T) {
+		setup := federationtesting.NewFederationSetup(addGateway(false))
+		t.Cleanup(setup.Close)
+		gqlClient := NewGraphqlClient(http.DefaultClient)
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+		resp := gqlClient.Query(ctx, setup.GatewayServer.URL, testQueryPath("queries/merge_inline_fragment.graphql"), nil, t)
+		expected := `{"data":{"itemList":[{"__typename":"ItemA","itemName":"itemA","productList":[{"__typename":"ProductA","id":"productA"}]},{"__typename":"ItemB","itemName":"itemB","productList":[{"__typename":"ProductB","id":"productB"}]}]}}`
+		assert.Equal(t, compact(expected), string(resp))
+	})
 }
 
 func compact(input string) string {

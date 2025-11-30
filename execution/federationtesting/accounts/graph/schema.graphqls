@@ -12,6 +12,7 @@ type Query {
     otherInterfaces: [SomeInterface]
     someNestedInterfaces: [SomeNestedInterface]
     productA: ProductA
+    itemList: [Item!]!
 }
 
 type Cat {
@@ -205,4 +206,17 @@ type ProductA implements Base {
 type ProductB implements Base {
     id: ID!
     bundle: Bundle
+}
+
+interface Item {
+    itemName: String!
+}
+
+type ItemA implements Item {
+    itemName: String!
+    productList: [ProductA!]!
+}
+type ItemB implements Item {
+    itemName: String!
+    productList: [ProductB!]!
 }

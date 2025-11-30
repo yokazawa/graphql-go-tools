@@ -1,0 +1,22 @@
+query MergeInlineFragment {
+    itemList {
+        __typename
+        ...ItemA
+        ...ItemB
+    }
+}
+
+fragment ItemA on ItemA {
+    itemName
+    productList {
+        __typename
+        id
+    }
+}
+fragment ItemB on ItemB {
+    itemName
+    productList {
+        __typename
+        id
+    }
+}

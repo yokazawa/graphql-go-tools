@@ -239,6 +239,30 @@ func (r *queryResolver) ProductA(ctx context.Context) (*model.ProductA, error) {
 	}, nil
 }
 
+// ItemList is the resolver for the itemList field.
+func (r *queryResolver) ItemList(ctx context.Context) ([]model.Item, error) {
+	return []model.Item{
+		model.ItemA{
+			ItemName: "itemA",
+			ProductList: []*model.ProductA{
+				{
+					ID:     "productA",
+					Bundle: nil,
+				},
+			},
+		},
+		model.ItemB{
+			ItemName: "itemB",
+			ProductList: []*model.ProductB{
+				{
+					ID:     "productB",
+					Bundle: nil,
+				},
+			},
+		},
+	}, nil
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 

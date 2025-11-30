@@ -46,6 +46,11 @@ type Info interface {
 	GetQuantity() int
 }
 
+type Item interface {
+	IsItem()
+	GetItemName() string
+}
+
 type Name interface {
 	IsName()
 	GetName() string
@@ -155,6 +160,22 @@ func (D) IsCd() {}
 
 func (D) IsCDer()                {}
 func (this D) GetName() *CDerObj { return this.Name }
+
+type ItemA struct {
+	ItemName    string      `json:"itemName"`
+	ProductList []*ProductA `json:"productList"`
+}
+
+func (ItemA) IsItem()                  {}
+func (this ItemA) GetItemName() string { return this.ItemName }
+
+type ItemB struct {
+	ItemName    string      `json:"itemName"`
+	ProductList []*ProductB `json:"productList"`
+}
+
+func (ItemB) IsItem()                  {}
+func (this ItemB) GetItemName() string { return this.ItemName }
 
 type Owner struct {
 	OwnerName string `json:"ownerName"`
