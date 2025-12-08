@@ -373,10 +373,11 @@ func (m *mergeFields) mergeValues(left, right *resolve.Field) {
 		r := right.Value.(*resolve.Object)
 		l.Fields = append(l.Fields, r.Fields...)
 
-		// オブジェクトフィールド同士の ParentOnTypeNames も Depth ごとに Names の union でマージする
-		if len(left.ParentOnTypeNames) == 0 {
-			left.ParentOnTypeNames = right.ParentOnTypeNames
-		} else if len(right.ParentOnTypeNames) != 0 {
+		// オブジェクトフィールド同士の ParentOnTypeNames も Depth ごとに Names の union でマージする。
+		// ただし、左側が無条件フィールド（自身に OnTypeNames も ParentOnTypeNames も無い）である場合は、
+		// 右側の条件をフィールド自体に引き継がない。無条件フィールドが条件付きに変化してしまい、
+		// ルートで選択されたサブフィールドが欠落する原因になるため。
+		if !(left.OnTypeNames == nil && len(left.ParentOnTypeNames) == 0) && len(right.ParentOnTypeNames) != 0 {
 			depthToNames := make(map[int][][]byte, len(left.ParentOnTypeNames)+len(right.ParentOnTypeNames))
 			for i := range left.ParentOnTypeNames {
 				depth := left.ParentOnTypeNames[i].Depth
@@ -402,12 +403,9 @@ func (m *mergeFields) mergeValues(left, right *resolve.Field) {
 			ro := r.Item.(*resolve.Object)
 			lo.Fields = append(lo.Fields, ro.Fields...)
 		}
-		// 配列フィールド同士をマージする場合も、ParentOnTypeNames を Depth ごとに Names の union でマージする
-		// これを行わないと、異なる親の型条件から来た同名配列フィールドを統合した際に
-		// 片方の条件しか保持されず、実行時に条件不一致でフィールドごと欠落する事象が発生する
-		if len(left.ParentOnTypeNames) == 0 {
-			left.ParentOnTypeNames = right.ParentOnTypeNames
-		} else if len(right.ParentOnTypeNames) != 0 {
+		// 配列フィールド同士をマージする場合も、ParentOnTypeNames を Depth ごとに Names の union でマージする。
+		// ただし、左側が無条件フィールドの場合は、右側の条件をフィールド自体に引き継がない（上記オブジェクトと同様）。
+		if !(left.OnTypeNames == nil && len(left.ParentOnTypeNames) == 0) && len(right.ParentOnTypeNames) != 0 {
 			depthToNames := make(map[int][][]byte, len(left.ParentOnTypeNames)+len(right.ParentOnTypeNames))
 			for i := range left.ParentOnTypeNames {
 				depth := left.ParentOnTypeNames[i].Depth
