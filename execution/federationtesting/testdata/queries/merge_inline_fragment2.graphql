@@ -1,0 +1,32 @@
+query MergeInlineFragment2 {
+    productA {
+        bundle {
+            id
+            bundleName
+            bundleRelation { id bundleName }
+        }
+        ... on Base {
+            ...ProductDetail
+        }
+    }
+}
+
+fragment ProductDetail on Base {
+    ... on ProductB {
+        bundle {
+            displayOwner: bundleOwner {
+                ownerName
+            }
+            bundleOwners { ownerName }
+            bundleRelation { id bundleName }
+        }
+    }
+    ... on ProductA {
+        bundle {
+            displayOwner: bundleOwner {
+                ownerName
+            }
+            bundleOwners { ownerName }
+        }
+    }
+}

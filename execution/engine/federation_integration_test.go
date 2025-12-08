@@ -592,6 +592,17 @@ func TestFederationIntegrationTest(t *testing.T) {
 		expected := `{"data":{"itemList":[{"__typename":"ItemA","itemName":"itemA","productList":[{"__typename":"ProductA","id":"productA"}]},{"__typename":"ItemB","itemName":"itemB","productList":[{"__typename":"ProductB","id":"productB"}]}]}}`
 		assert.Equal(t, compact(expected), string(resp))
 	})
+
+	t.Run("merge concrete type in root field and interface fragment 2", func(t *testing.T) {
+		setup := federationtesting.NewFederationSetup(addGateway(false))
+		t.Cleanup(setup.Close)
+		gqlClient := NewGraphqlClient(http.DefaultClient)
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+		resp := gqlClient.Query(ctx, setup.GatewayServer.URL, testQueryPath("queries/merge_inline_fragment2.graphql"), nil, t)
+		expected := `{"data":{"productA":{"bundle":{"id":"c111","bundleName":"bundle","bundleRelation":[{"id":"c112","bundleName":"bundle2"}],"displayOwner":{"ownerName":"owner"},"bundleOwners":[{"ownerName":"owner"}]}}}}`
+		assert.Equal(t, compact(expected), string(resp))
+	})
 }
 
 func compact(input string) string {
