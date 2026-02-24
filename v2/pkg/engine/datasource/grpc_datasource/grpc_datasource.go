@@ -7,15 +7,20 @@
 package grpcdatasource
 
 import (
-	"bytes"
 	"context"
-	"errors"
+	"encoding/binary"
+	"fmt"
+	"net/http"
+	"strings"
 
+	"github.com/cespare/xxhash/v2"
 	"github.com/tidwall/gjson"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/wundergraph/astjson"
+	"github.com/wundergraph/go-arena"
 
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/engine/datasource/httpclient"
@@ -38,12 +43,13 @@ var _ resolve.DataSource = (*DataSource)(nil)
 // transforms the responses back to GraphQL format.
 type DataSource struct {
 	plan              *RPCExecutionPlan
-	graph             *DependencyGraph
 	cc                grpc.ClientConnInterface
 	rc                *RPCCompiler
 	mapping           *GRPCMapping
 	federationConfigs plan.FederationFieldConfigurations
 	disabled          bool
+
+	pool *arena.Pool
 }
 
 type ProtoConfig struct {
@@ -73,39 +79,61 @@ func NewDataSource(client grpc.ClientConnInterface, config DataSourceConfig) (*D
 
 	return &DataSource{
 		plan:              plan,
-		graph:             NewDependencyGraph(plan),
 		cc:                client,
 		rc:                config.Compiler,
 		mapping:           config.Mapping,
 		federationConfigs: config.FederationConfigs,
 		disabled:          config.Disabled,
+		pool:              arena.NewArenaPool(),
 	}, nil
 }
 
 // Load implements resolve.DataSource interface.
-// It processes the input JSON data to make gRPC calls and writes
-// the response to the output buffer.
+// It processes the input JSON data to make gRPC calls and returns
+// the response data.
+//
+// Headers are converted to gRPC metadata and part of gRPC calls.
 //
 // The input is expected to contain the necessary information to make
 // a gRPC call, including service name, method name, and request data.
-func (d *DataSource) Load(ctx context.Context, input []byte, out *bytes.Buffer) (err error) {
+func (d *DataSource) Load(ctx context.Context, headers http.Header, input []byte) (data []byte, err error) {
 	// get variables from input
 	variables := gjson.Parse(unsafebytes.BytesToString(input)).Get("body.variables")
-	builder := newJSONBuilder(d.mapping, variables)
+
+	var (
+		poolItems []*arena.PoolItem
+	)
+	defer func() {
+		d.pool.ReleaseMany(poolItems)
+	}()
+
+	item := d.acquirePoolItem(input, 0)
+	poolItems = append(poolItems, item)
+	builder := newJSONBuilder(item.Arena, d.mapping, variables)
 
 	if d.disabled {
-		out.Write(builder.writeErrorBytes(errors.New("gRPC datasource needs to be enabled to be used")))
-		return nil
+		return builder.writeErrorBytes(fmt.Errorf("gRPC datasource needs to be enabled to be used")), nil
 	}
 
-	arena := astjson.Arena{}
-	defer arena.Reset()
-	root := arena.NewObject()
+	// convert headers to grpc metadata and attach to ctx
+	if len(headers) > 0 {
+		// assume that each header has exactly one value for default pairs size
+		pairs := make([]string, 0, len(headers)*2)
+		for headerName, headerValues := range headers {
+			headerName = strings.ToLower(headerName)
+			for _, v := range headerValues {
+				pairs = append(pairs, headerName, v)
+			}
+		}
+		ctx = metadata.AppendToOutgoingContext(ctx, pairs...)
+	}
 
-	failed := false
+	graph := NewDependencyGraph(d.plan)
 
-	if err := d.graph.TopologicalSortResolve(func(nodes []FetchItem) error {
-		serviceCalls, err := d.rc.CompileFetches(d.graph, nodes, variables)
+	root := astjson.ObjectValue(nil)
+
+	if err := graph.TopologicalSortResolve(func(nodes []FetchItem) error {
+		serviceCalls, err := d.rc.CompileFetches(graph, nodes, variables)
 		if err != nil {
 			return err
 		}
@@ -115,8 +143,10 @@ func (d *DataSource) Load(ctx context.Context, input []byte, out *bytes.Buffer) 
 
 		// make gRPC calls
 		for index, serviceCall := range serviceCalls {
+			item := d.acquirePoolItem(input, index)
+			poolItems = append(poolItems, item)
+			builder := newJSONBuilder(item.Arena, d.mapping, variables)
 			errGrp.Go(func() error {
-				a := astjson.Arena{}
 				// Invoke the gRPC method - this will populate serviceCall.Output
 
 				err := d.cc.Invoke(errGrpCtx, serviceCall.MethodFullName(), serviceCall.Input, serviceCall.Output)
@@ -124,7 +154,7 @@ func (d *DataSource) Load(ctx context.Context, input []byte, out *bytes.Buffer) 
 					return err
 				}
 
-				response, err := builder.marshalResponseJSON(&a, &serviceCall.RPC.Response, serviceCall.Output)
+				response, err := builder.marshalResponseJSON(&serviceCall.RPC.Response, serviceCall.Output)
 				if err != nil {
 					return err
 				}
@@ -149,9 +179,7 @@ func (d *DataSource) Load(ctx context.Context, input []byte, out *bytes.Buffer) 
 		}
 
 		if err := errGrp.Wait(); err != nil {
-			out.Write(builder.writeErrorBytes(err))
-			failed = true
-			return nil
+			return err
 		}
 
 		for _, result := range results {
@@ -162,19 +190,28 @@ func (d *DataSource) Load(ctx context.Context, input []byte, out *bytes.Buffer) 
 				root, err = builder.mergeValues(root, result.response)
 			}
 			if err != nil {
-				out.Write(builder.writeErrorBytes(err))
 				return err
 			}
 		}
 
 		return nil
-	}); err != nil || failed {
-		return err
+	}); err != nil {
+		return builder.writeErrorBytes(err), nil
 	}
 
-	data := builder.toDataObject(root)
-	out.Write(data.MarshalTo(nil))
-	return nil
+	value := builder.toDataObject(root)
+	return value.MarshalTo(nil), err
+}
+
+func (d *DataSource) acquirePoolItem(input []byte, index int) *arena.PoolItem {
+	keyGen := xxhash.New()
+	_, _ = keyGen.Write(input)
+	var b [8]byte
+	binary.LittleEndian.PutUint64(b[:], uint64(index))
+	_, _ = keyGen.Write(b[:])
+	key := keyGen.Sum64()
+	item := d.pool.Acquire(key)
+	return item
 }
 
 // LoadWithFiles implements resolve.DataSource interface.
@@ -184,6 +221,6 @@ func (d *DataSource) Load(ctx context.Context, input []byte, out *bytes.Buffer) 
 // might not be applicable for most gRPC use cases.
 //
 // Currently unimplemented.
-func (d *DataSource) LoadWithFiles(ctx context.Context, input []byte, files []*httpclient.FileUpload, out *bytes.Buffer) (err error) {
+func (d *DataSource) LoadWithFiles(ctx context.Context, headers http.Header, input []byte, files []*httpclient.FileUpload) (data []byte, err error) {
 	panic("unimplemented")
 }

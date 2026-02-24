@@ -600,11 +600,13 @@ func (p *RPCCompiler) buildProtoMessageWithContext(inputMessage Message, rpcMess
 	contextList := p.newEmptyListMessageByName(rootMessage, contextSchemaField.Name)
 	contextData := p.resolveContextData(context[0], contextRPCField) // TODO handle multiple contexts (resolver requires another resolver)
 
-	for _, data := range contextData {
+	for _, contextElement := range contextData {
 		val := contextList.NewElement()
 		valMsg := val.Message()
-		for fieldName, value := range data {
-			p.setMessageValue(valMsg, fieldName, value)
+		for fieldName, value := range contextElement {
+			if err := p.setMessageValue(valMsg, fieldName, value); err != nil {
+				return nil, err
+			}
 		}
 
 		contextList.Append(val)
@@ -625,10 +627,10 @@ func (p *RPCCompiler) buildProtoMessageWithContext(inputMessage Message, rpcMess
 	if err != nil {
 		return nil, err
 	}
-
-	// Set the context and args fields
-	p.setMessageValue(rootMessage, contextSchemaField.Name, protoref.ValueOfList(contextList))
-	p.setMessageValue(rootMessage, argsRPCField.Name, protoref.ValueOfMessage(args))
+	// Set the args field
+	if err := p.setMessageValue(rootMessage, argsRPCField.Name, protoref.ValueOfMessage(args)); err != nil {
+		return nil, err
+	}
 
 	return rootMessage, nil
 }
@@ -674,7 +676,6 @@ func (p *RPCCompiler) resolveContextDataForPath(message protoref.Message, path a
 	}
 
 	return p.resolveDataForPath(msg.Message(), path)
-
 }
 
 // resolveListDataForPath resolves the data for a given path in a list message.
@@ -694,13 +695,14 @@ func (p *RPCCompiler) resolveListDataForPath(message protoref.List, fd protoref.
 
 			for _, val := range values {
 				if list, isList := val.Interface().(protoref.List); isList {
-					values := p.resolveListDataForPath(list, fd, path)
+					values := p.resolveListDataForPath(list, fd, path[1:])
 					result = append(result, values...)
 					continue
+				} else {
+					result = append(result, val)
 				}
 			}
 
-			result = append(result, values...)
 		default:
 			result = append(result, item)
 		}
@@ -736,7 +738,7 @@ func (p *RPCCompiler) resolveDataForPath(messsage protoref.Message, path ast.Pat
 	switch fd.Kind() {
 	case protoref.MessageKind:
 		if fd.IsList() {
-			return []protoref.Value{field}
+			return []protoref.Value{protoref.ValueOfList(field.List())}
 		}
 
 		return p.resolveDataForPath(field.Message(), path[1:])
@@ -835,8 +837,33 @@ func (p *RPCCompiler) newEmptyListMessageByName(msg protoref.Message, name strin
 	return msg.Mutable(msg.Descriptor().Fields().ByName(protoref.Name(name))).List()
 }
 
-func (p *RPCCompiler) setMessageValue(message protoref.Message, fieldName string, value protoref.Value) {
+func (p *RPCCompiler) setMessageValue(message protoref.Message, fieldName string, value protoref.Value) error {
+	fd := message.Descriptor().Fields().ByName(protoref.Name(fieldName))
+	if fd == nil {
+		return fmt.Errorf("field %s not found in message %s", fieldName, message.Descriptor().Name())
+	}
+
+	// If we are setting a list value here, we need to create a copy of the list
+	// because the field descriptor is included in the type check, so we cannot asign it using `Set` directly.
+	if fd.IsList() {
+		list := message.Mutable(fd).List()
+		source, ok := value.Interface().(protoref.List)
+		if !ok {
+			return fmt.Errorf("value is not a list")
+		}
+
+		p.copyListValues(source, list)
+		return nil
+	}
+
 	message.Set(message.Descriptor().Fields().ByName(protoref.Name(fieldName)), value)
+	return nil
+}
+
+func (p *RPCCompiler) copyListValues(source protoref.List, destination protoref.List) {
+	for i := range source.Len() {
+		destination.Append(source.Get(i))
+	}
 }
 
 // buildProtoMessage recursively builds a protobuf message from an RPCMessage definition

@@ -39,7 +39,7 @@ type Visitor struct {
 	response                     *resolve.GraphQLResponse
 	subscription                 *resolve.GraphQLSubscription
 	OperationName                string
-	operationDefinition          int
+	operationDefinitionRef       int
 	objects                      []*resolve.Object
 	currentFields                []objectFields
 	currentField                 *resolve.Field
@@ -57,13 +57,29 @@ type Visitor struct {
 	pathCache                    map[astvisitor.VisitorKind]map[int]string
 
 	// plannerFields maps plannerID to fieldRefs planned on this planner.
+	// Values added in AllowVisitor callback which is fired before calling LeaveField
 	plannerFields map[int][]int
 
 	// fieldPlanners maps fieldRef to the plannerIDs where it was planned on.
+	// Values added in AllowVisitor callback which is fired before calling LeaveField
 	fieldPlanners map[int][]int
 
 	// fieldEnclosingTypeNames maps fieldRef to the enclosing type name.
 	fieldEnclosingTypeNames map[int]string
+}
+
+func NewVisitor(w *astvisitor.Walker) *Visitor {
+	return &Visitor{
+		Walker:                  w,
+		fieldConfigs:            map[int]*FieldConfiguration{},
+		exportedVariables:       map[string]struct{}{},
+		skipIncludeOnFragments:  map[int]skipIncludeInfo{},
+		indirectInterfaceFields: map[int]indirectInterfaceField{},
+		pathCache:               map[astvisitor.VisitorKind]map[int]string{},
+		plannerFields:           map[int][]int{},
+		fieldPlanners:           map[int][]int{},
+		fieldEnclosingTypeNames: map[int]string{},
+	}
 }
 
 type indirectInterfaceField struct {
@@ -80,12 +96,12 @@ func (v *Visitor) debugOnEnterNode(kind ast.NodeKind, ref int) {
 	case ast.NodeKindField:
 		fieldName := v.Operation.FieldNameString(ref)
 		fullPath := v.currentFullPath(false)
-		v.debugPrint("EnterField : ", fieldName, " ref: ", ref, " path: ", fullPath)
+		v.debugPrint("EnterField:", fieldName, " ref:", ref, " path:", fullPath)
 	case ast.NodeKindInlineFragment:
 		fragmentTypeCondition := v.Operation.InlineFragmentTypeConditionNameString(ref)
-		v.debugPrint("EnterInlineFragment : ", fragmentTypeCondition, " ref: ", ref)
+		v.debugPrint("EnterInlineFragment:", fragmentTypeCondition, " ref:", ref)
 	case ast.NodeKindSelectionSet:
-		v.debugPrint("EnterSelectionSet", " ref: ", ref)
+		v.debugPrint("EnterSelectionSet", " ref:", ref)
 	}
 }
 
@@ -98,12 +114,12 @@ func (v *Visitor) debugOnLeaveNode(kind ast.NodeKind, ref int) {
 	case ast.NodeKindField:
 		fieldName := v.Operation.FieldNameString(ref)
 		fullPath := v.currentFullPath(false)
-		v.debugPrint("LeaveField : ", fieldName, " ref: ", ref, " path: ", fullPath)
+		v.debugPrint("LeaveField:", fieldName, " ref:", ref, " path:", fullPath)
 	case ast.NodeKindInlineFragment:
 		fragmentTypeCondition := v.Operation.InlineFragmentTypeConditionNameString(ref)
-		v.debugPrint("LeaveInlineFragment : ", fragmentTypeCondition, " ref: ", ref)
+		v.debugPrint("LeaveInlineFragment:", fragmentTypeCondition, " ref:", ref)
 	case ast.NodeKindSelectionSet:
-		v.debugPrint("LeaveSelectionSet", " ref: ", ref)
+		v.debugPrint("LeaveSelectionSet", " ref:", ref)
 	}
 }
 
@@ -132,6 +148,10 @@ type objectFields struct {
 func (v *Visitor) AllowVisitor(kind astvisitor.VisitorKind, ref int, visitor any, skipFor astvisitor.SkipVisitors) bool {
 	if visitor == v {
 		// main planner visitor should always be allowed
+		return true
+	}
+	if _, isCostVisitor := visitor.(*CostVisitor); isCostVisitor {
+		// cost tree visitor should always be allowed
 		return true
 	}
 	var (
@@ -610,24 +630,24 @@ func (v *Visitor) addInterfaceObjectNameToTypeNames(fieldRef int, typeName []byt
 	return onTypeNames
 }
 
-func (v *Visitor) LeaveField(ref int) {
-	v.debugOnLeaveNode(ast.NodeKindField, ref)
+func (v *Visitor) LeaveField(fieldRef int) {
+	v.debugOnLeaveNode(ast.NodeKindField, fieldRef)
 
-	if v.skipField(ref) {
+	if v.skipField(fieldRef) {
 		// we should also check skips on field leave
 		// cause on nested keys we could mistakenly remove wrong object
 		// from the stack of the current objects
 		return
 	}
 
-	if v.currentFields[len(v.currentFields)-1].popOnField == ref {
+	if v.currentFields[len(v.currentFields)-1].popOnField == fieldRef {
 		v.currentFields = v.currentFields[:len(v.currentFields)-1]
 	}
-	fieldDefinition, ok := v.Walker.FieldDefinition(ref)
+	fieldDefinitionRef, ok := v.Walker.FieldDefinition(fieldRef)
 	if !ok {
 		return
 	}
-	fieldDefinitionTypeNode := v.Definition.FieldDefinitionTypeNode(fieldDefinition)
+	fieldDefinitionTypeNode := v.Definition.FieldDefinitionTypeNode(fieldDefinitionRef)
 	switch fieldDefinitionTypeNode.Kind {
 	case ast.NodeKindObjectTypeDefinition, ast.NodeKindInterfaceTypeDefinition, ast.NodeKindUnionTypeDefinition:
 		v.objects = v.objects[:len(v.objects)-1]
@@ -969,14 +989,14 @@ func (v *Visitor) valueRequiresExportedVariable(value ast.Value) bool {
 	}
 }
 
-func (v *Visitor) EnterOperationDefinition(ref int) {
-	operationName := v.Operation.OperationDefinitionNameString(ref)
+func (v *Visitor) EnterOperationDefinition(opRef int) {
+	operationName := v.Operation.OperationDefinitionNameString(opRef)
 	if v.OperationName != operationName {
 		v.Walker.SkipNode()
 		return
 	}
 
-	v.operationDefinition = ref
+	v.operationDefinitionRef = opRef
 
 	rootObject := &resolve.Object{
 		Fields: []*resolve.Field{},
@@ -1062,14 +1082,6 @@ func (v *Visitor) resolveFieldPath(ref int) []string {
 
 func (v *Visitor) EnterDocument(operation, definition *ast.Document) {
 	v.Operation, v.Definition = operation, definition
-	v.fieldConfigs = map[int]*FieldConfiguration{}
-	v.exportedVariables = map[string]struct{}{}
-	v.skipIncludeOnFragments = map[int]skipIncludeInfo{}
-	v.indirectInterfaceFields = map[int]indirectInterfaceField{}
-	v.pathCache = map[astvisitor.VisitorKind]map[int]string{}
-	v.plannerFields = map[int][]int{}
-	v.fieldPlanners = map[int][]int{}
-	v.fieldEnclosingTypeNames = map[int]string{}
 }
 
 func (v *Visitor) LeaveDocument(_, _ *ast.Document) {
@@ -1168,10 +1180,10 @@ func (v *Visitor) resolveInputTemplates(config *objectFetchConfiguration, input 
 				return v.renderJSONValueTemplate(value, variables, inputValueDefinition)
 			}
 			variableValue := v.Operation.VariableValueNameString(value.Ref)
-			if !v.Operation.OperationDefinitionHasVariableDefinition(v.operationDefinition, variableValue) {
+			if !v.Operation.OperationDefinitionHasVariableDefinition(v.operationDefinitionRef, variableValue) {
 				break // omit optional argument when variable is not defined
 			}
-			variableDefinition, exists := v.Operation.VariableDefinitionByNameAndOperation(v.operationDefinition, v.Operation.VariableValueNameBytes(value.Ref))
+			variableDefinition, exists := v.Operation.VariableDefinitionByNameAndOperation(v.operationDefinitionRef, v.Operation.VariableValueNameBytes(value.Ref))
 			if !exists {
 				break
 			}
@@ -1291,6 +1303,8 @@ func (v *Visitor) configureSubscription(config *objectFetchConfiguration) {
 	v.subscription.Trigger.QueryPlan = subscription.QueryPlan
 	v.resolveInputTemplates(config, &subscription.Input, &v.subscription.Trigger.Variables)
 	v.subscription.Trigger.Input = []byte(subscription.Input)
+	v.subscription.Trigger.SourceName = config.sourceName
+	v.subscription.Trigger.SourceID = config.sourceID
 	v.subscription.Filter = config.filter
 }
 
@@ -1313,6 +1327,7 @@ func (v *Visitor) configureObjectFetch(config *objectFetchConfiguration) {
 	v.response.RawFetches = append(v.response.RawFetches, fetchItem)
 }
 
+// configureFetch builds and assembles all fields of resolve.SingleFetch.
 func (v *Visitor) configureFetch(internal *objectFetchConfiguration, external resolve.FetchConfiguration) *resolve.SingleFetch {
 	dataSourceType := reflect.TypeOf(external.DataSource).String()
 	dataSourceType = strings.TrimPrefix(dataSourceType, "*")
