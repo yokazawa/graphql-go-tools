@@ -49,7 +49,7 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/urfave/cli/v2 v2.27.7 // indirect
-	github.com/wundergraph/astjson v1.0.0 // indirect
+	github.com/wundergraph/astjson v1.1.0 // indirect
 	github.com/wundergraph/cosmo/composition-go v0.0.0-20241020204711-78f240a77c99 // indirect
 	github.com/wundergraph/cosmo/router v0.0.0-20251013094319-c611abf26b17 // indirect
 	github.com/wundergraph/go-arena v1.1.0 // indirect
