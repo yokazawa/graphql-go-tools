@@ -509,9 +509,7 @@ func TestFederationIntegrationTest(t *testing.T) {
 	})
 
 	t.Run("merge concrete type in root field and interface fragment", func(t *testing.T) {
-		setup := federationtesting.NewFederationSetup(addGateway(false))
-		t.Cleanup(setup.Close)
-		gqlClient := NewGraphqlClient(http.DefaultClient)
+		t.Parallel()
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 		resp := gqlClient.Query(ctx, setup.GatewayServer.URL, testQueryPath("queries/merge_concrete_type_in_root_field_and_interface_fragment.graphql"), nil, t)
@@ -520,9 +518,7 @@ func TestFederationIntegrationTest(t *testing.T) {
 	})
 
 	t.Run("merge inline fragment", func(t *testing.T) {
-		setup := federationtesting.NewFederationSetup(addGateway(false))
-		t.Cleanup(setup.Close)
-		gqlClient := NewGraphqlClient(http.DefaultClient)
+		t.Parallel()
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 		resp := gqlClient.Query(ctx, setup.GatewayServer.URL, testQueryPath("queries/merge_inline_fragment.graphql"), nil, t)
@@ -531,9 +527,7 @@ func TestFederationIntegrationTest(t *testing.T) {
 	})
 
 	t.Run("merge concrete type in root field and interface fragment 2", func(t *testing.T) {
-		setup := federationtesting.NewFederationSetup(addGateway(false))
-		t.Cleanup(setup.Close)
-		gqlClient := NewGraphqlClient(http.DefaultClient)
+		t.Parallel()
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 		resp := gqlClient.Query(ctx, setup.GatewayServer.URL, testQueryPath("queries/merge_inline_fragment2.graphql"), nil, t)
