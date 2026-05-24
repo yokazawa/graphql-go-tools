@@ -18,6 +18,11 @@ type AbstractListItem interface {
 	GetObj() OtherInterface
 }
 
+type Base interface {
+	IsBase()
+	GetBundle() *Bundle
+}
+
 type Cd interface {
 	IsCd()
 }
@@ -39,6 +44,11 @@ type Identifiable interface {
 type Info interface {
 	IsInfo()
 	GetQuantity() int
+}
+
+type Item interface {
+	IsItem()
+	GetItemName() string
 }
 
 type Name interface {
@@ -101,6 +111,14 @@ func (B) IsAb() {}
 func (B) IsNamer()             {}
 func (this B) GetName() string { return this.Name }
 
+type Bundle struct {
+	ID             string    `json:"id"`
+	BundleName     string    `json:"bundleName"`
+	BundleOwner    *Owner    `json:"bundleOwner,omitempty"`
+	BundleOwners   []*Owner  `json:"bundleOwners"`
+	BundleRelation []*Bundle `json:"bundleRelation"`
+}
+
 type C struct {
 	Name *CDerObj `json:"name,omitempty"`
 }
@@ -143,11 +161,47 @@ func (D) IsCd() {}
 func (D) IsCDer()                {}
 func (this D) GetName() *CDerObj { return this.Name }
 
+type ItemA struct {
+	ItemName    string      `json:"itemName"`
+	ProductList []*ProductA `json:"productList"`
+}
+
+func (ItemA) IsItem()                  {}
+func (this ItemA) GetItemName() string { return this.ItemName }
+
+type ItemB struct {
+	ItemName    string      `json:"itemName"`
+	ProductList []*ProductB `json:"productList"`
+}
+
+func (ItemB) IsItem()                  {}
+func (this ItemB) GetItemName() string { return this.ItemName }
+
+type Owner struct {
+	OwnerName string `json:"ownerName"`
+}
+
 type Product struct {
 	Upc string `json:"upc"`
 }
 
 func (Product) IsEntity() {}
+
+type ProductA struct {
+	ID     string  `json:"id"`
+	Bundle *Bundle `json:"bundle,omitempty"`
+}
+
+func (ProductA) IsBase()                 {}
+func (this ProductA) GetBundle() *Bundle { return this.Bundle }
+
+type ProductB struct {
+	ID     string  `json:"id"`
+	Bundle *Bundle `json:"bundle,omitempty"`
+}
+
+func (ProductB) IsBase()                 {}
+func (this ProductB) GetBundle() *Bundle { return this.Bundle }
 
 type Purchase struct {
 	Product  *Product `json:"product"`

@@ -55,6 +55,14 @@ type ComplexityRoot struct {
 		Name func(childComplexity int) int
 	}
 
+	Bundle struct {
+		BundleName     func(childComplexity int) int
+		BundleOwner    func(childComplexity int) int
+		BundleOwners   func(childComplexity int) int
+		BundleRelation func(childComplexity int) int
+		ID             func(childComplexity int) int
+	}
+
 	C struct {
 		Name func(childComplexity int) int
 	}
@@ -85,8 +93,32 @@ type ComplexityRoot struct {
 		FindUserByID func(childComplexity int, id string) int
 	}
 
+	ItemA struct {
+		ItemName    func(childComplexity int) int
+		ProductList func(childComplexity int) int
+	}
+
+	ItemB struct {
+		ItemName    func(childComplexity int) int
+		ProductList func(childComplexity int) int
+	}
+
+	Owner struct {
+		OwnerName func(childComplexity int) int
+	}
+
 	Product struct {
 		Upc func(childComplexity int) int
+	}
+
+	ProductA struct {
+		Bundle func(childComplexity int) int
+		ID     func(childComplexity int) int
+	}
+
+	ProductB struct {
+		Bundle func(childComplexity int) int
+		ID     func(childComplexity int) int
 	}
 
 	Purchase struct {
@@ -102,8 +134,10 @@ type ComplexityRoot struct {
 		Histories            func(childComplexity int) int
 		Identifiable         func(childComplexity int) int
 		InterfaceUnion       func(childComplexity int, which model.Which) int
+		ItemList             func(childComplexity int) int
 		Me                   func(childComplexity int) int
 		OtherInterfaces      func(childComplexity int) int
+		ProductA             func(childComplexity int) int
 		SomeNestedInterfaces func(childComplexity int) int
 		TitleName            func(childComplexity int) int
 		__resolve__service   func(childComplexity int) int
@@ -194,6 +228,8 @@ type QueryResolver interface {
 	Cds(ctx context.Context) ([]model.Cd, error)
 	OtherInterfaces(ctx context.Context) ([]model.SomeInterface, error)
 	SomeNestedInterfaces(ctx context.Context) ([]model.SomeNestedInterface, error)
+	ProductA(ctx context.Context) (*model.ProductA, error)
+	ItemList(ctx context.Context) ([]model.Item, error)
 }
 
 type executableSchema struct {
@@ -228,6 +264,41 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.B.Name(childComplexity), true
+
+	case "Bundle.bundleName":
+		if e.complexity.Bundle.BundleName == nil {
+			break
+		}
+
+		return e.complexity.Bundle.BundleName(childComplexity), true
+
+	case "Bundle.bundleOwner":
+		if e.complexity.Bundle.BundleOwner == nil {
+			break
+		}
+
+		return e.complexity.Bundle.BundleOwner(childComplexity), true
+
+	case "Bundle.bundleOwners":
+		if e.complexity.Bundle.BundleOwners == nil {
+			break
+		}
+
+		return e.complexity.Bundle.BundleOwners(childComplexity), true
+
+	case "Bundle.bundleRelation":
+		if e.complexity.Bundle.BundleRelation == nil {
+			break
+		}
+
+		return e.complexity.Bundle.BundleRelation(childComplexity), true
+
+	case "Bundle.id":
+		if e.complexity.Bundle.ID == nil {
+			break
+		}
+
+		return e.complexity.Bundle.ID(childComplexity), true
 
 	case "C.name":
 		if e.complexity.C.Name == nil {
@@ -297,12 +368,75 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Entity.FindUserByID(childComplexity, args["id"].(string)), true
 
+	case "ItemA.itemName":
+		if e.complexity.ItemA.ItemName == nil {
+			break
+		}
+
+		return e.complexity.ItemA.ItemName(childComplexity), true
+
+	case "ItemA.productList":
+		if e.complexity.ItemA.ProductList == nil {
+			break
+		}
+
+		return e.complexity.ItemA.ProductList(childComplexity), true
+
+	case "ItemB.itemName":
+		if e.complexity.ItemB.ItemName == nil {
+			break
+		}
+
+		return e.complexity.ItemB.ItemName(childComplexity), true
+
+	case "ItemB.productList":
+		if e.complexity.ItemB.ProductList == nil {
+			break
+		}
+
+		return e.complexity.ItemB.ProductList(childComplexity), true
+
+	case "Owner.ownerName":
+		if e.complexity.Owner.OwnerName == nil {
+			break
+		}
+
+		return e.complexity.Owner.OwnerName(childComplexity), true
+
 	case "Product.upc":
 		if e.complexity.Product.Upc == nil {
 			break
 		}
 
 		return e.complexity.Product.Upc(childComplexity), true
+
+	case "ProductA.bundle":
+		if e.complexity.ProductA.Bundle == nil {
+			break
+		}
+
+		return e.complexity.ProductA.Bundle(childComplexity), true
+
+	case "ProductA.id":
+		if e.complexity.ProductA.ID == nil {
+			break
+		}
+
+		return e.complexity.ProductA.ID(childComplexity), true
+
+	case "ProductB.bundle":
+		if e.complexity.ProductB.Bundle == nil {
+			break
+		}
+
+		return e.complexity.ProductB.Bundle(childComplexity), true
+
+	case "ProductB.id":
+		if e.complexity.ProductB.ID == nil {
+			break
+		}
+
+		return e.complexity.ProductB.ID(childComplexity), true
 
 	case "Purchase.product":
 		if e.complexity.Purchase.Product == nil {
@@ -372,6 +506,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.InterfaceUnion(childComplexity, args["which"].(model.Which)), true
 
+	case "Query.itemList":
+		if e.complexity.Query.ItemList == nil {
+			break
+		}
+
+		return e.complexity.Query.ItemList(childComplexity), true
+
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
 			break
@@ -385,6 +526,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.OtherInterfaces(childComplexity), true
+
+	case "Query.productA":
+		if e.complexity.Query.ProductA == nil {
+			break
+		}
+
+		return e.complexity.Query.ProductA(childComplexity), true
 
 	case "Query.someNestedInterfaces":
 		if e.complexity.Query.SomeNestedInterfaces == nil {
@@ -752,6 +900,8 @@ var sources = []*ast.Source{
     cds: [CD]
     otherInterfaces: [SomeInterface]
     someNestedInterfaces: [SomeNestedInterface]
+    productA: ProductA
+    itemList: [Item!]!
 }
 
 type Cat {
@@ -922,7 +1072,44 @@ type CDerObj {
     first: String!
     middle: String!
     last: String!
-}`, BuiltIn: false},
+}
+
+interface Base {
+    bundle: Bundle
+}
+type Bundle {
+    id: ID!
+    bundleName: String!
+    bundleOwner: Owner
+    bundleOwners: [Owner!]!
+    bundleRelation: [Bundle!]!
+}
+type Owner {
+    ownerName: String!
+}
+
+type ProductA implements Base {
+    id: ID!
+    bundle: Bundle
+}
+type ProductB implements Base {
+    id: ID!
+    bundle: Bundle
+}
+
+interface Item {
+    itemName: String!
+}
+
+type ItemA implements Item {
+    itemName: String!
+    productList: [ProductA!]!
+}
+type ItemB implements Item {
+    itemName: String!
+    productList: [ProductB!]!
+}
+`, BuiltIn: false},
 	{Name: "../../federation/directives.graphql", Input: `
 	directive @key(fields: _FieldSet!) repeatable on OBJECT | INTERFACE
 	directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
@@ -1272,6 +1459,243 @@ func (ec *executionContext) fieldContext_B_name(_ context.Context, field graphql
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Bundle_id(ctx context.Context, field graphql.CollectedField, obj *model.Bundle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bundle_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bundle_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bundle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Bundle_bundleName(ctx context.Context, field graphql.CollectedField, obj *model.Bundle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bundle_bundleName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BundleName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bundle_bundleName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bundle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Bundle_bundleOwner(ctx context.Context, field graphql.CollectedField, obj *model.Bundle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bundle_bundleOwner(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BundleOwner, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Owner)
+	fc.Result = res
+	return ec.marshalOOwner2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐOwner(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bundle_bundleOwner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bundle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ownerName":
+				return ec.fieldContext_Owner_ownerName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Owner", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Bundle_bundleOwners(ctx context.Context, field graphql.CollectedField, obj *model.Bundle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bundle_bundleOwners(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BundleOwners, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Owner)
+	fc.Result = res
+	return ec.marshalNOwner2ᚕᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐOwnerᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bundle_bundleOwners(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bundle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ownerName":
+				return ec.fieldContext_Owner_ownerName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Owner", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Bundle_bundleRelation(ctx context.Context, field graphql.CollectedField, obj *model.Bundle) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Bundle_bundleRelation(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BundleRelation, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Bundle)
+	fc.Result = res
+	return ec.marshalNBundle2ᚕᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐBundleᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Bundle_bundleRelation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Bundle",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Bundle_id(ctx, field)
+			case "bundleName":
+				return ec.fieldContext_Bundle_bundleName(ctx, field)
+			case "bundleOwner":
+				return ec.fieldContext_Bundle_bundleOwner(ctx, field)
+			case "bundleOwners":
+				return ec.fieldContext_Bundle_bundleOwners(ctx, field)
+			case "bundleRelation":
+				return ec.fieldContext_Bundle_bundleRelation(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Bundle", field.Name)
 		},
 	}
 	return fc, nil
@@ -1704,6 +2128,238 @@ func (ec *executionContext) fieldContext_Entity_findUserByID(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _ItemA_itemName(ctx context.Context, field graphql.CollectedField, obj *model.ItemA) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ItemA_itemName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ItemName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ItemA_itemName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ItemA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ItemA_productList(ctx context.Context, field graphql.CollectedField, obj *model.ItemA) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ItemA_productList(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProductList, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.ProductA)
+	fc.Result = res
+	return ec.marshalNProductA2ᚕᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐProductAᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ItemA_productList(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ItemA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProductA_id(ctx, field)
+			case "bundle":
+				return ec.fieldContext_ProductA_bundle(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProductA", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ItemB_itemName(ctx context.Context, field graphql.CollectedField, obj *model.ItemB) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ItemB_itemName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ItemName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ItemB_itemName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ItemB",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ItemB_productList(ctx context.Context, field graphql.CollectedField, obj *model.ItemB) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ItemB_productList(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProductList, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.ProductB)
+	fc.Result = res
+	return ec.marshalNProductB2ᚕᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐProductBᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ItemB_productList(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ItemB",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProductB_id(ctx, field)
+			case "bundle":
+				return ec.fieldContext_ProductB_bundle(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProductB", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Owner_ownerName(ctx context.Context, field graphql.CollectedField, obj *model.Owner) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Owner_ownerName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OwnerName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Owner_ownerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Owner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Product_upc(ctx context.Context, field graphql.CollectedField, obj *model.Product) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Product_upc(ctx, field)
 	if err != nil {
@@ -1743,6 +2399,200 @@ func (ec *executionContext) fieldContext_Product_upc(_ context.Context, field gr
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProductA_id(ctx context.Context, field graphql.CollectedField, obj *model.ProductA) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProductA_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProductA_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProductA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProductA_bundle(ctx context.Context, field graphql.CollectedField, obj *model.ProductA) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProductA_bundle(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Bundle, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Bundle)
+	fc.Result = res
+	return ec.marshalOBundle2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐBundle(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProductA_bundle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProductA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Bundle_id(ctx, field)
+			case "bundleName":
+				return ec.fieldContext_Bundle_bundleName(ctx, field)
+			case "bundleOwner":
+				return ec.fieldContext_Bundle_bundleOwner(ctx, field)
+			case "bundleOwners":
+				return ec.fieldContext_Bundle_bundleOwners(ctx, field)
+			case "bundleRelation":
+				return ec.fieldContext_Bundle_bundleRelation(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Bundle", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProductB_id(ctx context.Context, field graphql.CollectedField, obj *model.ProductB) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProductB_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProductB_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProductB",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProductB_bundle(ctx context.Context, field graphql.CollectedField, obj *model.ProductB) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProductB_bundle(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Bundle, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Bundle)
+	fc.Result = res
+	return ec.marshalOBundle2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐBundle(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProductB_bundle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProductB",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Bundle_id(ctx, field)
+			case "bundleName":
+				return ec.fieldContext_Bundle_bundleName(ctx, field)
+			case "bundleOwner":
+				return ec.fieldContext_Bundle_bundleOwner(ctx, field)
+			case "bundleOwners":
+				return ec.fieldContext_Bundle_bundleOwners(ctx, field)
+			case "bundleRelation":
+				return ec.fieldContext_Bundle_bundleRelation(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Bundle", field.Name)
 		},
 	}
 	return fc, nil
@@ -2316,6 +3166,97 @@ func (ec *executionContext) _Query_someNestedInterfaces(ctx context.Context, fie
 }
 
 func (ec *executionContext) fieldContext_Query_someNestedInterfaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("FieldContext.Child cannot be called on type INTERFACE")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_productA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_productA(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ProductA(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.ProductA)
+	fc.Result = res
+	return ec.marshalOProductA2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐProductA(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_productA(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProductA_id(ctx, field)
+			case "bundle":
+				return ec.fieldContext_ProductA_bundle(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProductA", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_itemList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_itemList(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ItemList(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.Item)
+	fc.Result = res
+	return ec.marshalNItem2ᚕgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐItemᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_itemList(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -6034,6 +6975,29 @@ func (ec *executionContext) _AbstractListItem(ctx context.Context, sel ast.Selec
 	}
 }
 
+func (ec *executionContext) _Base(ctx context.Context, sel ast.SelectionSet, obj model.Base) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.ProductB:
+		return ec._ProductB(ctx, sel, &obj)
+	case *model.ProductB:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ProductB(ctx, sel, obj)
+	case model.ProductA:
+		return ec._ProductA(ctx, sel, &obj)
+	case *model.ProductA:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ProductA(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
 func (ec *executionContext) _CD(ctx context.Context, sel ast.SelectionSet, obj model.Cd) graphql.Marshaler {
 	switch obj := (obj).(type) {
 	case nil:
@@ -6130,6 +7094,29 @@ func (ec *executionContext) _Info(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Purchase(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _Item(ctx context.Context, sel ast.SelectionSet, obj model.Item) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.ItemB:
+		return ec._ItemB(ctx, sel, &obj)
+	case *model.ItemB:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ItemB(ctx, sel, obj)
+	case model.ItemA:
+		return ec._ItemA(ctx, sel, &obj)
+	case *model.ItemA:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ItemA(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -6384,6 +7371,62 @@ func (ec *executionContext) _B(ctx context.Context, sel ast.SelectionSet, obj *m
 			out.Values[i] = graphql.MarshalString("B")
 		case "name":
 			out.Values[i] = ec._B_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var bundleImplementors = []string{"Bundle"}
+
+func (ec *executionContext) _Bundle(ctx context.Context, sel ast.SelectionSet, obj *model.Bundle) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bundleImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Bundle")
+		case "id":
+			out.Values[i] = ec._Bundle_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bundleName":
+			out.Values[i] = ec._Bundle_bundleName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bundleOwner":
+			out.Values[i] = ec._Bundle_bundleOwner(ctx, field, obj)
+		case "bundleOwners":
+			out.Values[i] = ec._Bundle_bundleOwners(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bundleRelation":
+			out.Values[i] = ec._Bundle_bundleRelation(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -6712,6 +7755,133 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 	return out
 }
 
+var itemAImplementors = []string{"ItemA", "Item"}
+
+func (ec *executionContext) _ItemA(ctx context.Context, sel ast.SelectionSet, obj *model.ItemA) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, itemAImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ItemA")
+		case "itemName":
+			out.Values[i] = ec._ItemA_itemName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "productList":
+			out.Values[i] = ec._ItemA_productList(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var itemBImplementors = []string{"ItemB", "Item"}
+
+func (ec *executionContext) _ItemB(ctx context.Context, sel ast.SelectionSet, obj *model.ItemB) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, itemBImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ItemB")
+		case "itemName":
+			out.Values[i] = ec._ItemB_itemName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "productList":
+			out.Values[i] = ec._ItemB_productList(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var ownerImplementors = []string{"Owner"}
+
+func (ec *executionContext) _Owner(ctx context.Context, sel ast.SelectionSet, obj *model.Owner) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ownerImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Owner")
+		case "ownerName":
+			out.Values[i] = ec._Owner_ownerName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var productImplementors = []string{"Product", "_Entity"}
 
 func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, obj *model.Product) graphql.Marshaler {
@@ -6728,6 +7898,88 @@ func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var productAImplementors = []string{"ProductA", "Base"}
+
+func (ec *executionContext) _ProductA(ctx context.Context, sel ast.SelectionSet, obj *model.ProductA) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, productAImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProductA")
+		case "id":
+			out.Values[i] = ec._ProductA_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bundle":
+			out.Values[i] = ec._ProductA_bundle(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var productBImplementors = []string{"ProductB", "Base"}
+
+func (ec *executionContext) _ProductB(ctx context.Context, sel ast.SelectionSet, obj *model.ProductB) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, productBImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProductB")
+		case "id":
+			out.Values[i] = ec._ProductB_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bundle":
+			out.Values[i] = ec._ProductB_bundle(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6997,6 +8249,47 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_someNestedInterfaces(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "productA":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_productA(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "itemList":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_itemList(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -7996,6 +9289,60 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNBundle2ᚕᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐBundleᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Bundle) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNBundle2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐBundle(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNBundle2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐBundle(ctx context.Context, sel ast.SelectionSet, v *model.Bundle) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Bundle(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v any) (float64, error) {
 	res, err := graphql.UnmarshalFloatContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -8098,6 +9445,60 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) marshalNItem2githubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐItem(ctx context.Context, sel ast.SelectionSet, v model.Item) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Item(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNItem2ᚕgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐItemᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Item) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNItem2githubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐItem(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNOtherInterface2githubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐOtherInterface(ctx context.Context, sel ast.SelectionSet, v model.OtherInterface) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8108,6 +9509,60 @@ func (ec *executionContext) marshalNOtherInterface2githubᚗcomᚋwundergraphᚋ
 	return ec._OtherInterface(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNOwner2ᚕᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐOwnerᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Owner) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNOwner2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐOwner(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNOwner2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐOwner(ctx context.Context, sel ast.SelectionSet, v *model.Owner) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Owner(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNProduct2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v *model.Product) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8116,6 +9571,114 @@ func (ec *executionContext) marshalNProduct2ᚖgithubᚗcomᚋwundergraphᚋgrap
 		return graphql.Null
 	}
 	return ec._Product(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNProductA2ᚕᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐProductAᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ProductA) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNProductA2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐProductA(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNProductA2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐProductA(ctx context.Context, sel ast.SelectionSet, v *model.ProductA) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ProductA(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNProductB2ᚕᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐProductBᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ProductB) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNProductB2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐProductB(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNProductB2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐProductB(ctx context.Context, sel ast.SelectionSet, v *model.ProductB) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ProductB(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNSomeObject2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐSomeObject(ctx context.Context, sel ast.SelectionSet, v *model.SomeObject) graphql.Marshaler {
@@ -8646,6 +10209,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) marshalOBundle2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐBundle(ctx context.Context, sel ast.SelectionSet, v *model.Bundle) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Bundle(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOCD2githubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐCd(ctx context.Context, sel ast.SelectionSet, v model.Cd) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -8761,6 +10331,20 @@ func (ec *executionContext) marshalOIdentifiable2githubᚗcomᚋwundergraphᚋgr
 		return graphql.Null
 	}
 	return ec._Identifiable(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOOwner2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐOwner(ctx context.Context, sel ast.SelectionSet, v *model.Owner) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Owner(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOProductA2ᚖgithubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐProductA(ctx context.Context, sel ast.SelectionSet, v *model.ProductA) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ProductA(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSomeInterface2githubᚗcomᚋwundergraphᚋgraphqlᚑgoᚑtoolsᚋexecutionᚋfederationtestingᚋaccountsᚋgraphᚋmodelᚐSomeInterface(ctx context.Context, sel ast.SelectionSet, v model.SomeInterface) graphql.Marshaler {

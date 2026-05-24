@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
+	"os"
 	"strconv"
 	"strings"
 
@@ -24,6 +26,8 @@ import (
 )
 
 const invalidPath = "invalid path"
+
+var debugTypenameValidation = os.Getenv("DEBUG_TYPENAME_VALIDATION") == "1"
 
 type Resolvable struct {
 	options ResolvableOptions
@@ -705,6 +709,15 @@ func (r *Resolvable) walkObject(obj *Object, parent *astjson.Value) bool {
 	}
 
 	typeName := value.GetStringBytes("__typename")
+	if debugTypenameValidation {
+		log.Printf("[typename-debug] path=%v typeName=%s objectType=%s source=%s possible=%v",
+			r.path,
+			string(typeName),
+			obj.TypeName,
+			obj.SourceName,
+			keysOfPossibleTypes(obj.PossibleTypes),
+		)
+	}
 	if typeName != nil && len(obj.PossibleTypes) > 0 {
 		// when we have a typename field present in a json object, we need to check if the type is valid
 
@@ -1463,4 +1476,15 @@ func (r *Resolvable) pathLastElementDescription(typeName string) string {
 		return fmt.Sprintf("field %s.%s", typeName, elem.Name)
 	}
 	return fmt.Sprintf("array element of type %s at index %d", typeName, elem.Idx)
+}
+
+func keysOfPossibleTypes(m map[string]struct{}) []string {
+	if m == nil {
+		return nil
+	}
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
 }

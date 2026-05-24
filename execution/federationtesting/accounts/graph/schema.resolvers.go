@@ -211,6 +211,58 @@ func (r *queryResolver) SomeNestedInterfaces(ctx context.Context) ([]model.SomeN
 	}, nil
 }
 
+// ProductA is the resolver for the productA field.
+func (r *queryResolver) ProductA(ctx context.Context) (*model.ProductA, error) {
+	return &model.ProductA{
+		ID: "p111",
+		Bundle: &model.Bundle{
+			ID:         "c111",
+			BundleName: "bundle",
+			BundleOwner: &model.Owner{
+				OwnerName: "owner",
+			},
+			BundleOwners: []*model.Owner{
+				{
+					OwnerName: "owner",
+				},
+			},
+			BundleRelation: []*model.Bundle{
+				{
+					ID:             "c112",
+					BundleName:     "bundle2",
+					BundleOwner:    nil,
+					BundleOwners:   []*model.Owner{},
+					BundleRelation: []*model.Bundle{},
+				},
+			},
+		},
+	}, nil
+}
+
+// ItemList is the resolver for the itemList field.
+func (r *queryResolver) ItemList(ctx context.Context) ([]model.Item, error) {
+	return []model.Item{
+		model.ItemA{
+			ItemName: "itemA",
+			ProductList: []*model.ProductA{
+				{
+					ID:     "productA",
+					Bundle: nil,
+				},
+			},
+		},
+		model.ItemB{
+			ItemName: "itemB",
+			ProductList: []*model.ProductB{
+				{
+					ID:     "productB",
+					Bundle: nil,
+				},
+			},
+		},
+	}, nil
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 

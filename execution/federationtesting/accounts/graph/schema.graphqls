@@ -11,6 +11,8 @@ type Query {
     cds: [CD]
     otherInterfaces: [SomeInterface]
     someNestedInterfaces: [SomeNestedInterface]
+    productA: ProductA
+    itemList: [Item!]!
 }
 
 type Cat {
@@ -181,4 +183,40 @@ type CDerObj {
     first: String!
     middle: String!
     last: String!
+}
+
+interface Base {
+    bundle: Bundle
+}
+type Bundle {
+    id: ID!
+    bundleName: String!
+    bundleOwner: Owner
+    bundleOwners: [Owner!]!
+    bundleRelation: [Bundle!]!
+}
+type Owner {
+    ownerName: String!
+}
+
+type ProductA implements Base {
+    id: ID!
+    bundle: Bundle
+}
+type ProductB implements Base {
+    id: ID!
+    bundle: Bundle
+}
+
+interface Item {
+    itemName: String!
+}
+
+type ItemA implements Item {
+    itemName: String!
+    productList: [ProductA!]!
+}
+type ItemB implements Item {
+    itemName: String!
+    productList: [ProductB!]!
 }
